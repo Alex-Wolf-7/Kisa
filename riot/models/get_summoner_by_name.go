@@ -1,6 +1,6 @@
 package models
 
-type SummonerV4Response struct {
+type GetSummonerByNameResponse struct {
 	ID            string `json:"id"`
 	AccountID     string `json:"accountId"`
 	PUUID         string `json:"puuid"`
