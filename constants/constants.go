@@ -13,7 +13,7 @@ const MAC_SETTINGS_DB_PATH = "~/Documents/KisaData"
 const WINDOWS_SETTINGS_DB_PATH = "C:/Users/%s/Documents/KisaData"
 
 const LOG_PERIODIC_ON = false
-const LOG_DEBUG_ON = false
+const LOG_DEBUG_ON = true
 const LOG_INFO_ON = true
 const LOG_ERROR_ON = true
 const LOG_FATAL_ON = true

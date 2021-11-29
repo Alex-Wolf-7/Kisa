@@ -19,6 +19,8 @@ import (
 	"github.com/Alex-Wolf-7/Kisa/ui"
 )
 
+var clientErrorDisplayed = false
+
 func main() {
 	opSys := opsys.NewOpSys(runtime.GOOS)
 	settingsDB, err := settingsdb.NewSettingsDB(opSys)
@@ -130,8 +132,17 @@ func getClientInfo(opSys opsys.OpSys) (string, string, error) {
 	portMatch := string(portMatcher.Find(out))
 	if portMatch == "" {
 		// No error; retry
-		plog.Periodicf("League of Legends client must be running (portMatch)\n")
+		if !clientErrorDisplayed {
+			plog.Infof("Please open the League of Legends client")
+			clientErrorDisplayed = true
+		} else {
+			plog.Periodicf("League of Legends client must be running (portMatch)\n")
+		}
+
 		return "", "", nil
+	} else {
+		// Show "please open client" message only once until client actually opens
+		clientErrorDisplayed = false
 	}
 	port := strings.Split(portMatch, "=")[1]
 
