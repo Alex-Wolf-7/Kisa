@@ -3,12 +3,12 @@ package ui
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"os"
 	"strings"
 
 	"github.com/Alex-Wolf-7/Kisa/gamesettings"
 	"github.com/Alex-Wolf-7/Kisa/lolclient"
+	"github.com/Alex-Wolf-7/Kisa/plog"
 	"github.com/Alex-Wolf-7/Kisa/settingsdb"
 )
 
@@ -18,22 +18,24 @@ type UI struct {
 	reader     *bufio.Reader
 	lolClient  *lolclient.LoLClient
 	settingsDB *settingsdb.SettingsDB
+	stop       bool
 }
 
-func Start(lolClient *lolclient.LoLClient, settingsDB *settingsdb.SettingsDB) error {
+func NewUI(lolClient *lolclient.LoLClient, settingsDB *settingsdb.SettingsDB) (*UI, error) {
 	reader := bufio.NewReader(os.Stdin)
-	ui := UI{
+	ui := &UI{
 		reader:     reader,
 		lolClient:  lolClient,
 		settingsDB: settingsDB,
+		stop:       false,
 	}
 
 	err := ui.checkDefault()
 	if err != nil {
-		return fmt.Errorf("unable to check default settings: %s", err.Error())
+		return nil, fmt.Errorf("unable to check default settings: %s", err.Error())
 	}
 
-	return ui.Loop()
+	return ui, nil
 }
 
 func (ui *UI) checkDefault() error {
@@ -62,12 +64,15 @@ func (ui *UI) checkDefault() error {
 }
 
 func (ui *UI) Loop() error {
-	for {
+	for !ui.stop {
 		// Get input
 		fmt.Println("Please enter a champion name to save their game settings, or \"exit\" to quit. Enter \"default\" to change default settings")
 		text := ui.readString()
+		if ui.stop {
+			return nil
+		}
 		if text == "exit" {
-			log.Println("Goodbye")
+			plog.Infof("Goodbye!\n")
 			return nil
 		}
 
@@ -82,8 +87,10 @@ func (ui *UI) Loop() error {
 			ui.saveNewChampionSettings(text)
 		}
 
-		fmt.Println()
+		fmt.Println() // Newline
 	}
+
+	return nil
 }
 
 // Champion does not exist: create new entry and compare vs default
@@ -94,7 +101,7 @@ func (ui *UI) saveNewChampionSettings(champion string) error {
 	}
 
 	ui.settingsDB.PutSettings(champion, newSettings)
-	fmt.Println("Champion settings overwritten")
+	fmt.Println("Champion settings saved")
 
 	defaultSettings, err := ui.settingsDB.GetDefaultSettings()
 	if err != nil {
@@ -146,4 +153,8 @@ func (ui *UI) readString() string {
 	text = strings.TrimSpace(text)
 	text = strings.ToLower(text)
 	return text
+}
+
+func (ui *UI) Stop() {
+	ui.stop = true
 }

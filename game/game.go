@@ -234,7 +234,7 @@ func (g *Game) IsValid() bool {
 	return g.GetPhase() != Phase_NO_GAME
 }
 
-func (g *Game) GetChampionForSummoner(summonerInternalName string) string {
+func (g *Game) GetChampionNumberForSummoner(summonerInternalName string) string {
 	for _, selection := range g.GameData.PlayerChampionSelections {
 		if strings.ToLower(selection.SummonerInternalName) == strings.ToLower(summonerInternalName) {
 			return strconv.FormatInt(int64(selection.ChampionID), 10)

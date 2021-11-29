@@ -79,9 +79,6 @@ func (lol *LoLClient) GetChampSelectSession() (*match.Match, error) {
 		return nil, fmt.Errorf("Error performing GetChampSelectSession request: %s", err)
 	}
 
-	// out, err := io.ReadAll(resp.Body)
-	// fmt.Println(string(out))
-
 	match := new(match.Match)
 	err = json.NewDecoder(resp.Body).Decode(match)
 	if err != nil {
