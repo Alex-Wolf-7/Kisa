@@ -9,6 +9,7 @@ import (
 	"net/http"
 
 	"github.com/Alex-Wolf-7/Kisa/game"
+	gs "github.com/Alex-Wolf-7/Kisa/gamesettings"
 	"github.com/Alex-Wolf-7/Kisa/match"
 	"github.com/Alex-Wolf-7/Kisa/summoner"
 )
@@ -112,7 +113,7 @@ func (lol *LoLClient) GetGameSession() (*game.Game, error) {
 	return game, nil
 }
 
-func (lol *LoLClient) GetGameSettings() (map[string]map[string]interface{}, error) {
+func (lol *LoLClient) GetGameSettings() (gs.GameSettings, error) {
 	reqUrl := lol.url + GAME_SETTINGS
 	req, err := http.NewRequest("GET", reqUrl, nil)
 	if err != nil {
@@ -125,7 +126,7 @@ func (lol *LoLClient) GetGameSettings() (map[string]map[string]interface{}, erro
 		return nil, fmt.Errorf("Error performing GetGameSettings request: %s", err)
 	}
 
-	gameSettings := make(map[string]map[string]interface{})
+	gameSettings := gs.NewGameSettings()
 	err = json.NewDecoder(resp.Body).Decode(&gameSettings)
 	if err != nil {
 		return nil, fmt.Errorf("Error decoding GameSettings object from GetGameSettings response: %s", err)
@@ -134,7 +135,7 @@ func (lol *LoLClient) GetGameSettings() (map[string]map[string]interface{}, erro
 	return gameSettings, nil
 }
 
-func (lol *LoLClient) PatchGameSettings(gameSettings map[string]map[string]interface{}) error {
+func (lol *LoLClient) PatchGameSettings(gameSettings gs.GameSettings) error {
 	settingsBytes, err := json.Marshal(gameSettings)
 	if err != nil {
 		return fmt.Errorf("Unable to marshal gameSettings into JSON: %s", err)
