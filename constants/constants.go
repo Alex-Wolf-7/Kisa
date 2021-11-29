@@ -9,7 +9,7 @@ const CHECK_IF_CLIENT_OPEN_TIME = 60 * time.Second
 const CHECK_IF_GAME_STARTED_TIME = 10 * time.Second
 const CHECK_IF_GAME_OVER_TIME = 10 * time.Second
 
-const MAC_SETTINGS_DB_PATH = "~/Documents/KisaData"
+const MAC_SETTINGS_DB_PATH = "%s/Documents/KisaData"
 const WINDOWS_SETTINGS_DB_PATH = "C:/Users/%s/Documents/KisaData"
 
 const LOG_PERIODIC_ON = false
