@@ -28,7 +28,8 @@ func NewSettingsDB(opSys opsys.OpSys) (*SettingsDB, error) {
 	if opSys.IsMac() {
 		dbPath = constants.MAC_SETTINGS_DB_PATH
 	} else if opSys.IsWindows() {
-		dbPath = constants.WINDOWS_SETTINGS_DB_PATH
+		userName := os.Getenv("USERNAME")
+		dbPath = fmt.Sprintf(constants.WINDOWS_SETTINGS_DB_PATH, userName)
 	} else {
 		return nil, fmt.Errorf("unrecognized OS: %s", opSys.String())
 	}

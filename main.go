@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"os/exec"
 	"regexp"
@@ -73,13 +72,7 @@ func waitForPortAndToken(opSys opsys.OpSys) (string, string, error) {
 	var err error
 
 	for {
-		if opSys.IsWindows() {
-			port, authToken, err = getClientInfoWindows()
-		} else if opSys.IsMac() {
-			port, authToken, err = getClientInfoMac()
-		} else {
-			return "", "", fmt.Errorf("Unrecognized OpSys: %s", opSys.String())
-		}
+		port, authToken, err = getClientInfo(opSys)
 
 		if err != nil {
 			return "", "", err
@@ -92,15 +85,40 @@ func waitForPortAndToken(opSys opsys.OpSys) (string, string, error) {
 	}
 }
 
-func getClientInfoWindows() (string, string, error) {
-	return "", "", errors.New("Not implemented for Windows yet")
+func getProcessesWindows() ([]byte, error) {
+	cmd := exec.Command("wmic", "PROCESS", "WHERE", "name='LeagueClientUx.exe'", "GET", "commandline")
+	out, err := cmd.Output()
+	if err != nil {
+		return nil, fmt.Errorf("Unable to get current windows processes: %s", err)
+	}
+
+	return out, nil
 }
 
-func getClientInfoMac() (string, string, error) {
+func getProcessesMac() ([]byte, error) {
 	cmd := exec.Command("bash", "-c", "ps -A | grep LeagueClientUx")
 	out, err := cmd.Output()
 	if err != nil {
-		return "", "", fmt.Errorf("Unable to get current mac processes: %s", err)
+		return nil, fmt.Errorf("Unable to get current mac processes: %s", err)
+	}
+
+	return out, nil
+}
+
+func getClientInfo(opSys opsys.OpSys) (string, string, error) {
+	var out []byte
+	var err error
+
+	if opSys.IsWindows() {
+		out, err = getProcessesWindows()
+	} else if opSys.IsMac() {
+		out, err = getProcessesMac()
+	} else {
+		return "", "", fmt.Errorf("Unrecognized GOOS: %s", opSys.String())
+	}
+
+	if err != nil {
+		return "", "", err
 	}
 
 	portMatcher, err := regexp.Compile("--app-port=([0-9]*)")
