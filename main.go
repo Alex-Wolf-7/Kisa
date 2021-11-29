@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"regexp"
 	"runtime"
@@ -164,7 +165,10 @@ func runBackground(background *background.Background, ui *ui.UI, failChan chan b
 
 func runUI(ui *ui.UI, background *background.Background, failChan chan bool) {
 	go func() {
-		err := ui.Loop()
+		err, exit := ui.Loop()
+		if exit {
+			os.Exit(0)
+		}
 		background.Stop()
 		failChan <- true
 		if err != nil {

@@ -63,23 +63,23 @@ func (ui *UI) checkDefault() error {
 	return nil
 }
 
-func (ui *UI) Loop() error {
+func (ui *UI) Loop() (error, bool) {
 	for !ui.stop {
 		// Get input
 		fmt.Println("Please enter a champion name to save their game settings, or \"exit\" to quit. Enter \"default\" to change default settings")
 		text := ui.readString()
 		if ui.stop {
-			return nil
+			return nil, false
 		}
 		if text == "exit" {
 			plog.Infof("Goodbye!\n")
-			return nil
+			return nil, true
 		}
 
 		// Check current settings of named champion
 		retrievedGameSettings, err := ui.settingsDB.GetSettings(text)
 		if err != nil {
-			return fmt.Errorf("unable to get game settings: %s", err.Error())
+			return fmt.Errorf("unable to get game settings: %s", err.Error()), false
 
 		} else if retrievedGameSettings != nil {
 			ui.overwriteChampionSettings(text, retrievedGameSettings)
@@ -90,7 +90,7 @@ func (ui *UI) Loop() error {
 		fmt.Println() // Newline
 	}
 
-	return nil
+	return nil, false
 }
 
 // Champion does not exist: create new entry and compare vs default
