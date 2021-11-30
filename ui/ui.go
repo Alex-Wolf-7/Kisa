@@ -75,6 +75,9 @@ func (ui *UI) Loop() (error, bool) {
 			plog.Infof("Goodbye!\n")
 			return nil, true
 		}
+		if text == "" {
+			continue
+		}
 
 		// Check current settings of named champion
 		retrievedGameSettings, err := ui.settingsDB.GetSettings(text)
