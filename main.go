@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"os/exec"
 	"regexp"
 	"runtime"
@@ -12,6 +11,7 @@ import (
 	"github.com/Alex-Wolf-7/Kisa/background"
 	"github.com/Alex-Wolf-7/Kisa/constants"
 	"github.com/Alex-Wolf-7/Kisa/datadragon"
+	iopublisher "github.com/Alex-Wolf-7/Kisa/iopublisher"
 	"github.com/Alex-Wolf-7/Kisa/lolclient"
 	"github.com/Alex-Wolf-7/Kisa/opsys"
 	"github.com/Alex-Wolf-7/Kisa/plog"
@@ -27,6 +27,8 @@ func main() {
 	if err != nil {
 		plog.FatalfWithCode("100", "unable to set up settings db: %s\n", err.Error())
 	}
+
+	ioPublisher := iopublisher.NewIOPublisher()
 
 	for {
 		port, authToken, err := waitForPortAndToken(opSys)
@@ -63,10 +65,18 @@ func main() {
 			continue
 		}
 
-		failChan := make(chan bool, 2)
-		runUI(ui, b, failChan)
-		runBackground(b, ui, failChan)
-		<-failChan
+		// Starts UI thread in different channel
+		ioPublisher.Listen(ui)
+		
+		// Sustained background loop, blocks until error
+		err = b.Loop()
+		
+		// Cleanup
+		ioPublisher.RemoveListener()
+		if err != nil {
+			plog.ErrorfWithBackup("Error: restarting\n", "Error in background thread: %s\n", err.Error())
+		}
+		plog.Debugf("Background thread killed\n")
 	}
 }
 
@@ -133,7 +143,7 @@ func getClientInfo(opSys opsys.OpSys) (string, string, error) {
 	if portMatch == "" {
 		// No error; retry
 		if !clientErrorDisplayed {
-			plog.Infof("Please open the League of Legends client")
+			fmt.Println("Please open the League of Legends client")
 			clientErrorDisplayed = true
 		} else {
 			plog.Periodicf("League of Legends client must be running (portMatch)\n")
@@ -162,10 +172,10 @@ func getClientInfo(opSys opsys.OpSys) (string, string, error) {
 	return port, auth, nil
 }
 
-func runBackground(background *background.Background, ui *ui.UI, failChan chan bool) {
+func runBackground(background *background.Background, ui *ui.UI, failChan chan bool, ioPublisher *iopublisher.IOPublisher) {
 	go func() {
 		err := background.Loop()
-		ui.Stop()
+		ioPublisher.RemoveListener()
 		failChan <- true
 		if err != nil {
 			plog.ErrorfWithBackup("Error: restarting\n", "Error in background thread: %s\n", err.Error())
@@ -174,17 +184,3 @@ func runBackground(background *background.Background, ui *ui.UI, failChan chan b
 	}()
 }
 
-func runUI(ui *ui.UI, background *background.Background, failChan chan bool) {
-	go func() {
-		err, exit := ui.Loop()
-		if exit {
-			os.Exit(0)
-		}
-		background.Stop()
-		failChan <- true
-		if err != nil {
-			plog.ErrorfWithBackup("Error: restarting\n", "Error in UI thread: %s\n", err.Error())
-		}
-		plog.Debugf("UI thread killed\n")
-	}()
-}

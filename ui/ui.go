@@ -63,37 +63,41 @@ func (ui *UI) checkDefault() error {
 	return nil
 }
 
-func (ui *UI) Loop() (error, bool) {
-	for !ui.stop {
-		// Get input
-		fmt.Println("Please enter a champion name to save their game settings, or \"exit\" to quit. Enter \"default\" to change default settings")
-		text := ui.readString()
-		if ui.stop {
-			return nil, false
-		}
-		if text == "exit" {
-			plog.Infof("Goodbye!\n")
-			return nil, true
-		}
-		if text == "" {
-			continue
-		}
+func (ui *UI) PreInput() {
+	fmt.Println("Please enter a champion name to save their game settings, or \"exit\" to quit. Enter \"default\" to change default settings")
+}
 
-		// Check current settings of named champion
-		retrievedGameSettings, err := ui.settingsDB.GetSettings(text)
-		if err != nil {
-			return fmt.Errorf("unable to get game settings: %s", err.Error()), false
-
-		} else if retrievedGameSettings != nil {
-			ui.overwriteChampionSettings(text, retrievedGameSettings)
-		} else {
-			ui.saveNewChampionSettings(text)
-		}
-
-		fmt.Println() // Newline
+// Takes raw input as string, returns error if occurs and bool for if to quit
+func (ui *UI) HandleInput(input string) (error, bool) {
+	text := parseString(input)
+	if ui.stop {
+		return nil, false
+	}
+	if text == "exit" {
+		plog.Infof("Goodbye!\n")
+		return nil, true
+	}
+	if text == "" {
+		return nil, false
 	}
 
+	// Check current settings of named champion
+	retrievedGameSettings, err := ui.settingsDB.GetSettings(text)
+	if err != nil {
+		return fmt.Errorf("unable to get game settings: %s", err.Error()), false
+
+	} else if retrievedGameSettings != nil {
+		ui.overwriteChampionSettings(text, retrievedGameSettings)
+	} else {
+		ui.saveNewChampionSettings(text)
+	}
+
+	fmt.Println() // Newline
 	return nil, false
+}
+
+func (ui *UI) EndLoop() {
+	os.Exit(0)
 }
 
 // Champion does not exist: create new entry and compare vs default
@@ -149,13 +153,17 @@ func (ui *UI) overwriteChampionSettings(champion string, oldSettings gamesetting
 	return nil
 }
 
-func (ui *UI) readString() string {
-	text, _ := ui.reader.ReadString('\n')
+func parseString(text string) string {
 	text = strings.Replace(text, "\n", "", -1)
 	text = strings.Replace(text, "\r\n", "", -1)
 	text = strings.TrimSpace(text)
 	text = strings.ToLower(text)
 	return text
+}
+
+func (ui *UI) readString() string {
+	text, _ := ui.reader.ReadString('\n')
+	return parseString(text)
 }
 
 func (ui *UI) Stop() {
