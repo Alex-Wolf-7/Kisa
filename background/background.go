@@ -58,7 +58,7 @@ func (b *Background) Loop() error {
 			plog.Infof("Champion settings applied\n")
 		}
 
-		err = b.lolClient.PatchGameSettings(gameSettings)
+		err = b.lolClient.PatchGameSettingsMultiple(gameSettings)
 		if err != nil {
 			return fmt.Errorf("unable to change game settings: %s", err.Error())
 		}

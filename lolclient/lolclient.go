@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/Alex-Wolf-7/Kisa/game"
 	gs "github.com/Alex-Wolf-7/Kisa/gamesettings"
@@ -156,6 +157,41 @@ func (lol *LoLClient) PatchGameSettings(gameSettings gs.GameSettings) error {
 		return fmt.Errorf("PatchGameSettings response code is not 200: %s", resp.Status)
 	}
 
+	return nil
+}
+
+// Patches game settings, then checks to make sure it has been patched correctly
+func (lol *LoLClient) PatchGameSettingsMultiple(gameSettings gs.GameSettings) error {
+	startGameSettings, err := lol.GetGameSettings()
+	if err != nil {
+		return err
+	}
+	startGameSettingsJson, err := json.Marshal(startGameSettings)
+	if err != nil {
+		return err
+	}
+
+	for i := 0; i < 5; i++ {
+		err = lol.PatchGameSettings(gameSettings)
+		if err != nil {
+			return err
+		}
+
+		afterGameSettings, err := lol.GetGameSettings()
+		if err != nil {
+			return err
+		}
+		afterGameSettingsJson, err := json.Marshal(afterGameSettings)
+		if err != nil {
+			return err
+		}
+
+		if string(startGameSettingsJson) != string(afterGameSettingsJson) {
+			return nil
+		} else {
+			time.Sleep(1 * time.Second)
+		}
+	}
 	return nil
 }
 
