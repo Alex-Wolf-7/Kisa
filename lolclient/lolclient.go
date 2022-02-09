@@ -12,6 +12,7 @@ import (
 	"github.com/Alex-Wolf-7/Kisa/game"
 	gs "github.com/Alex-Wolf-7/Kisa/gamesettings"
 	"github.com/Alex-Wolf-7/Kisa/match"
+	"github.com/Alex-Wolf-7/Kisa/plog"
 	"github.com/Alex-Wolf-7/Kisa/summoner"
 )
 
@@ -187,8 +188,10 @@ func (lol *LoLClient) PatchGameSettingsMultiple(gameSettings gs.GameSettings) er
 		}
 
 		if string(startGameSettingsJson) != string(afterGameSettingsJson) {
+			plog.Debugf("Successfully patched game settings. Took %d tries", i+1)
 			return nil
 		} else {
+			plog.Debugf("Unable to patch game settings, trying again")
 			time.Sleep(1 * time.Second)
 		}
 	}
