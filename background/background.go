@@ -81,9 +81,9 @@ func (b *Background) WaitForGameStart() (*models.Champion, error) {
 
 		if currentGame.GetPhase() == game.Phase_IN_PROGRESS {
 			champNum := currentGame.GetChampionNumberForSummoner(b.summoner.InternalName)
-			if champNum == "" {
-				plog.Debugf("Failed to get current champion: trying again in 5 seconds")
-				time.Sleep(5 * time.Second)
+			for champNum == "" {
+				plog.Debugf("Failed to get current champion: trying again in 1 second")
+				time.Sleep(1 * time.Second)
 				champNum = currentGame.GetChampionNumberForSummoner(b.summoner.InternalName)
 			}
 			champ, ok := b.championMap[champNum]
