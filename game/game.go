@@ -3,6 +3,8 @@ package game
 import (
 	"strconv"
 	"strings"
+
+	"github.com/Alex-Wolf-7/Kisa/plog"
 )
 
 type Phase int64
@@ -235,7 +237,10 @@ func (g *Game) IsValid() bool {
 }
 
 func (g *Game) GetChampionNumberForSummoner(summonerInternalName string) string {
+	plog.Debugf("Summoner: %s\n", summonerInternalName)
+	plog.Debugf("PlayerChampionSelections: %v\n", g.GameData.PlayerChampionSelections)
 	for _, selection := range g.GameData.PlayerChampionSelections {
+		plog.Debugf("Is %s == %s?\n", summonerInternalName, selection.SummonerInternalName)
 		if strings.ToLower(selection.SummonerInternalName) == strings.ToLower(summonerInternalName) {
 			return strconv.FormatInt(int64(selection.ChampionID), 10)
 		}

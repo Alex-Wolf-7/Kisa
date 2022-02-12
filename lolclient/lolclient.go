@@ -172,7 +172,7 @@ func (lol *LoLClient) PatchGameSettingsMultiple(gameSettings gs.GameSettings) er
 		return err
 	}
 
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 50; i++ {
 		err = lol.PatchGameSettings(gameSettings)
 		if err != nil {
 			return err

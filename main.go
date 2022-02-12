@@ -55,6 +55,10 @@ func main() {
 		if err != nil {
 			plog.ErrorfWithBackup("Unable to get current summoner: Restarting\n", "unable to get current summoner: %s\n", err.Error())
 			continue
+		} else if summoner == nil || summoner.InternalName == "" {
+			plog.ErrorfWithBackup("Unable to get current summoner: Restarting\n", "unable to get current summoner: empty\n")
+		} else {
+			plog.Infof("Summoner: %s\n", summoner.InternalName)
 		}
 
 		b := background.NewBackground(lolClient, settingsDB, summoner, championMap)
@@ -67,10 +71,10 @@ func main() {
 
 		// Starts UI thread in different channel
 		ioPublisher.Listen(ui)
-		
+
 		// Sustained background loop, blocks until error
 		err = b.Loop()
-		
+
 		// Cleanup
 		ioPublisher.RemoveListener()
 		if err != nil {
@@ -183,4 +187,3 @@ func runBackground(background *background.Background, ui *ui.UI, failChan chan b
 		plog.Debugf("Background thread killed\n")
 	}()
 }
-
