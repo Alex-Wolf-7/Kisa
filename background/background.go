@@ -55,7 +55,7 @@ func (b *Background) Loop() error {
 			}
 			plog.Infof("No champion-specific settings: using default settings\n")
 		} else {
-			plog.Infof("Champion settings applied\n")
+			plog.Infof("Champion settings obtained\n")
 		}
 
 		err = b.lolClient.PatchGameSettingsMultiple(gameSettings)
