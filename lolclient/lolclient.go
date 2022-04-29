@@ -11,6 +11,7 @@ import (
 
 	"github.com/Alex-Wolf-7/Kisa/game"
 	gs "github.com/Alex-Wolf-7/Kisa/gamesettings"
+	"github.com/Alex-Wolf-7/Kisa/keybindings"
 	"github.com/Alex-Wolf-7/Kisa/match"
 	"github.com/Alex-Wolf-7/Kisa/plog"
 	"github.com/Alex-Wolf-7/Kisa/summoner"
@@ -134,6 +135,55 @@ func (lol *LoLClient) GetGameSettings() (gs.GameSettings, error) {
 	return gameSettings, nil
 }
 
+func (lol *LoLClient) GetKeyBindings() (*keybindings.KeyBindings, error) {
+	reqUrl := lol.url + GAME_SETTINGS
+	req, err := http.NewRequest("GET", reqUrl, nil)
+	if err != nil {
+		return nil, fmt.Errorf("Error creating GetKeyBindings request: %s", err)
+	}
+	lol.setAuthorizationHeader(req)
+
+	resp, err := lol.http.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("Error performing GetKeyBindings request: %s", err)
+	}
+
+	keyBindings := new(keybindings.KeyBindings)
+	err = json.NewDecoder(resp.Body).Decode(keyBindings)
+	if err != nil {
+		return nil, fmt.Errorf("Error decoding KeyBindings object from GetGameSettings response: %s", err)
+	}
+
+	return keyBindings, nil
+}
+
+func (lol *LoLClient) PatchKeyBindings(keybindings keybindings.KeyBindings) error {
+	bindingsBytes, err := json.Marshal(keybindings)
+	if err != nil {
+		return fmt.Errorf("Unable to marshal keybindings into JSON: %s", err)
+	}
+
+	reqBody := bytes.NewReader(bindingsBytes)
+
+	reqUrl := lol.url + GAME_SETTINGS
+	req, err := http.NewRequest("PATCH", reqUrl, reqBody)
+	if err != nil {
+		return fmt.Errorf("Error creating PatchKeyBindings request: %s", err)
+	}
+	lol.setAuthorizationHeader(req)
+
+	resp, err := lol.http.Do(req)
+	if err != nil {
+		return fmt.Errorf("Error performing PatchKeyBindings request: %s", err)
+	}
+
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("PatchKeyBindings response code is not 200: %s", resp.Status)
+	}
+
+	return nil
+}
+
 func (lol *LoLClient) PatchGameSettings(gameSettings gs.GameSettings) error {
 	settingsBytes, err := json.Marshal(gameSettings)
 	if err != nil {
@@ -151,7 +201,7 @@ func (lol *LoLClient) PatchGameSettings(gameSettings gs.GameSettings) error {
 
 	resp, err := lol.http.Do(req)
 	if err != nil {
-		return fmt.Errorf("Error performing GetGameSettings request: %s", err)
+		return fmt.Errorf("Error performing PatchGameSettings request: %s", err)
 	}
 
 	if resp.StatusCode != 200 {
