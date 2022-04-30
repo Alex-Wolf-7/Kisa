@@ -198,7 +198,6 @@ func (lol *LoLClient) PatchKeyBindings(keybindings keybindings.KeyBindings) erro
 	if err != nil {
 		return fmt.Errorf("Unable to marshal keybindings into JSON: %s", err)
 	}
-	fmt.Println(string(bindingsBytes))
 
 	reqBody := bytes.NewReader(bindingsBytes)
 

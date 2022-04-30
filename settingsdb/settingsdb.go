@@ -31,7 +31,6 @@ func NewSettingsDB(opSys opsys.OpSys) (*SettingsDB, error) {
 			return nil, fmt.Errorf("unable to find home directory: %s", err.Error())
 		}
 		dbPath = fmt.Sprintf(constants.MAC_SETTINGS_DB_PATH, homeDir)
-		fmt.Println(dbPath)
 	} else if opSys.IsWindows() {
 		userName := os.Getenv("USERNAME")
 		dbPath = fmt.Sprintf(constants.WINDOWS_SETTINGS_DB_PATH, userName)
