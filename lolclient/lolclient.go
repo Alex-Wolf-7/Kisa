@@ -22,6 +22,7 @@ const (
 	CHAMP_SELECT_SESSION = "lol-champ-select/v1/session"
 	GAME_SESSION         = "lol-gameflow/v1/session"
 	GAME_SETTINGS        = "lol-game-settings/v1/input-settings"
+	CURRENT_CHAMPION     = "lol-champ-select/v1/current-champion"
 )
 
 type LoLClient struct {
@@ -45,6 +46,41 @@ func NewLoLClient(authToken string, clientURL string, port string) *LoLClient {
 		authToken: authToken,
 		url:       fmt.Sprintf(clientURL, port),
 	}
+}
+
+func (lol *LoLClient) Test() {
+	url := lol.url + "lol-champ-select/v1/current-champion"
+	req, _ := http.NewRequest("GET", url, nil)
+	lol.setAuthorizationHeader(req)
+
+	resp, _ := lol.http.Do(req)
+
+	bytes := make([]byte, 1000, 1000)
+	resp.Body.Read(bytes)
+	_ = string(bytes)
+}
+
+func (lol *LoLClient) GetLockedChampion() (int, error) {
+	reqUrl := lol.url + CURRENT_CHAMPION
+	req, err := http.NewRequest("GET", reqUrl, nil)
+	if err != nil {
+		return 0, fmt.Errorf("Error creating GetCurrentChampion request: %s", err)
+	}
+	lol.setAuthorizationHeader(req)
+
+	resp, err := lol.http.Do(req)
+	if err != nil {
+		return 0, fmt.Errorf("Error performing GetCurrentChampion request: %s", err)
+	}
+
+	champNum := new(int)
+	err = json.NewDecoder(resp.Body).Decode(champNum)
+	if err != nil || champNum == nil {
+		return 0, fmt.Errorf("Error champion number from GetCurrentChampion response: %s", err)
+	}
+
+	return *champNum, nil
+
 }
 
 func (lol *LoLClient) GetCurrentSummoner() (*summoner.Summoner, error) {
@@ -162,6 +198,7 @@ func (lol *LoLClient) PatchKeyBindings(keybindings keybindings.KeyBindings) erro
 	if err != nil {
 		return fmt.Errorf("Unable to marshal keybindings into JSON: %s", err)
 	}
+	fmt.Println(string(bindingsBytes))
 
 	reqBody := bytes.NewReader(bindingsBytes)
 

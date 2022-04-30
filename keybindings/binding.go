@@ -7,13 +7,16 @@ import (
 
 const KEY_FORMAT = "[%s]"
 
-type Binding string
+type Binding []string
 
-func NewBinding(keys []string) Binding {
+func (b Binding) MarshalJSON() ([]byte, error) {
 	var builder strings.Builder
-	for _, key := range keys {
+	builder.WriteRune('"')
+	for _, key := range b {
 		builder.WriteString(fmt.Sprintf(KEY_FORMAT, key))
 	}
+	builder.WriteRune('"')
 
-	return Binding(builder.String())
+	strBinding := builder.String()
+	return []byte(strBinding), nil
 }

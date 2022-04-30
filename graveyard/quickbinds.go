@@ -1,7 +1,5 @@
 package gamesettings
 
-import "fmt"
-
 type Quickbinds struct {
 	EvtCastAvatarSpell1Smart *bool `json:"evtCastAvatarSpell1smart,omitempty"`
 	EvtCastAvatarSpell2Smart *bool `json:"evtCastAvatarSpell2smart,omitempty"`
@@ -20,8 +18,6 @@ type Quickbinds struct {
 
 func (qbDefault *Quickbinds) QuickbindsDiff(qbNew *Quickbinds) *Quickbinds {
 	var evtCastAvatarSpell1Smart, evtCastAvatarSpell2Smart, evtCastSpell1Smart, evtCastSpell2Smart, evtCastSpell3Smart, evtCastSpell4Smart, evtUseItem1Smart, evtUseItem2Smart, evtUseItem3Smart, evtUseItem4Smart, evtUseItem5Smart, evtUseItem6Smart, evtUseVisionItemsmart *bool
-	fmt.Println("Default:", *qbDefault)
-	fmt.Println("Jannaaa:", *qbNew)
 
 	if *qbDefault.EvtCastAvatarSpell1Smart != *qbNew.EvtCastAvatarSpell1Smart {
 		evtCastAvatarSpell1Smart = qbNew.EvtCastAvatarSpell1Smart

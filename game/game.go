@@ -18,6 +18,25 @@ const (
 	Phase_MATCHMAKING
 )
 
+func (p Phase) String() string {
+	switch p {
+	case Phase_UNKNOWN:
+		return "Unknown"
+	case Phase_IN_PROGRESS:
+		return "In progress"
+	case Phase_NO_GAME:
+		return "No game"
+	case Phase_CHAMP_SELECT:
+		return "Champ select"
+	case Phase_LOBBY:
+		return "Lobby"
+	case Phase_MATCHMAKING:
+		return "Matchmaking"
+	default:
+		return "Phase not found"
+	}
+}
+
 type Game struct {
 	GameClient struct {
 		ObserverServerIP   string `json:"observerServerIp"`

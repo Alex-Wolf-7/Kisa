@@ -1,6 +1,8 @@
 package gamesettings
 
-import "log"
+import (
+	"github.com/Alex-Wolf-7/Kisa/plog"
+)
 
 type GameSettings struct {
 	GameEvents *GameEvents `json:"GameEvents,omitempty"`
@@ -12,7 +14,7 @@ type GameSettings struct {
 func (gsDefault *GameSettings) GameSettingsDiff(gsNew *GameSettings) *GameSettings {
 	gameEvents, err := gsDefault.GameEvents.GameEventsDiff(gsNew.GameEvents)
 	if err != nil {
-		log.Printf("Unable to get the difference in Game Events: %s", err)
+		plog.ErrorfWithBackup("Unable to compare new game settings to old", "Unable to get the difference in Game Events: %s", err)
 	}
 
 	hudEvents := gsDefault.HUDEvents.HudEventsDiff(gsNew.HUDEvents)
