@@ -1,64 +1,115 @@
 package background
 
 import (
+	"fmt"
 	"strconv"
 	"time"
 
-	"github.com/Alex-Wolf-7/Kisa/champions"
 	"github.com/Alex-Wolf-7/Kisa/constants"
 	"github.com/Alex-Wolf-7/Kisa/datadragon/models"
 	"github.com/Alex-Wolf-7/Kisa/game"
+	"github.com/Alex-Wolf-7/Kisa/keybindings"
 	"github.com/Alex-Wolf-7/Kisa/lolclient"
 	"github.com/Alex-Wolf-7/Kisa/plog"
+	"github.com/Alex-Wolf-7/Kisa/settingsdb"
 )
 
 type Background struct {
 	lolClient   *lolclient.LoLClient
 	championMap map[string]*models.Champion
+	settingsDB  *settingsdb.SettingsDB
 }
 
 func NewBackground(
 	lolClient *lolclient.LoLClient,
 	championMap map[string]*models.Champion,
+	settingsDB *settingsdb.SettingsDB,
 ) *Background {
 
 	return &Background{
 		lolClient:   lolClient,
 		championMap: championMap,
+		settingsDB:  settingsDB,
 	}
 }
 
-func (b *Background) Loop() error {
-	var champNum int
+func (b *Background) Loop(quit chan bool) error {
 	for {
-		currentGame, err := b.lolClient.GetGameSession()
-		if err != nil {
-			return err
-		}
+		select {
+		case <-quit:
+			return nil
+		default:
 
-		switch currentGame.GetPhase() {
-		case game.Phase_CHAMP_SELECT:
-			// In champ select: keep getting most up-to-date locked champion and set keybindings
-			champNum, err = b.lolClient.GetLockedChampion()
+			currentGame, err := b.lolClient.GetGameSession()
 			if err != nil {
 				return err
 			}
 
-			if champNum != 0 {
-				champ := b.championMap[strconv.Itoa(champNum)]
-				err = b.lolClient.PatchKeyBindings(champions.GetChampion(champ.Name))
+			switch currentGame.GetPhase() {
+			case game.Phase_CHAMP_SELECT:
+				err = b.ChampSelect()
 				if err != nil {
-					plog.ErrorfWithBackup("unable to set keybindings", "unable to set keybindings to champion %s", champ.Name)
+					return err
 				}
+				time.Sleep(constants.CHECK_IF_GAME_STARTED_TIME)
+
+			case game.Phase_IN_PROGRESS:
+				// Game started: be done
+				return nil
+			default:
+				// No champ select or game started: wait for game start
+				time.Sleep(constants.CHECK_IF_CHAMP_SELECT_TIME)
 			}
-			time.Sleep(constants.CHECK_IF_GAME_STARTED_TIME)
-			continue
-		case game.Phase_IN_PROGRESS:
-			// Game started: be done
-			return nil
-		default:
-			// No champ select or game started: wait for game start
-			time.Sleep(constants.CHECK_IF_CHAMP_SELECT_TIME)
 		}
 	}
+}
+
+func (b *Background) ChampSelect() error {
+	// In champ select: keep getting most up-to-date locked champion and set keybindings
+	champNum, err := b.lolClient.GetLockedChampion()
+	if err != nil {
+		return err
+	}
+
+	if champNum != 0 {
+		champ := b.championMap[strconv.Itoa(champNum)]
+
+		keyBindings, err := b.settingsDB.GetKeyBindings(champ.Name)
+		if err != nil {
+			return err
+		}
+		if keyBindings == nil {
+			keyBindings, err = b.settingsDB.GetDefaultKeyBindings()
+			if err != nil {
+				return err
+			}
+			if keyBindings == nil {
+				keyBindings, err = b.NoDefaultKeybindings()
+				if err != nil {
+					return err
+				}
+				fmt.Println("No default key bindings found. Setting current key bindings as default.")
+			}
+		}
+
+		err = b.lolClient.PatchKeyBindings(*keyBindings)
+		if err != nil {
+			plog.ErrorfWithBackup("unable to set keybindings", "unable to set keybindings to champion %s", champ.Name)
+		}
+	}
+	return nil
+}
+
+func (b *Background) NoDefaultKeybindings() (*keybindings.KeyBindings, error) {
+	defaultBindings, err := b.lolClient.GetKeyBindings()
+	if err != nil {
+		return nil, err
+	}
+
+	err = b.settingsDB.PutDefaultKeyBindings(defaultBindings)
+	if err != nil {
+		return nil, err
+	}
+
+	return defaultBindings, nil
 }

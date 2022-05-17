@@ -14,32 +14,54 @@ import (
 	"github.com/Alex-Wolf-7/Kisa/lolclient"
 	"github.com/Alex-Wolf-7/Kisa/opsys"
 	"github.com/Alex-Wolf-7/Kisa/plog"
+	"github.com/Alex-Wolf-7/Kisa/settingsdb"
+	"github.com/Alex-Wolf-7/Kisa/ui"
 )
 
 var clientErrorDisplayed = false
 
 func main() {
-	opSys := opsys.NewOpSys(runtime.GOOS)
-	port, authToken, err := waitForPortAndToken(opSys)
-	if err != nil {
-		plog.FatalfWithCode("001", "error getting port and auth token: %s\n", err.Error())
+	for {
+		opSys := opsys.NewOpSys(runtime.GOOS)
+		port, authToken, err := waitForPortAndToken(opSys)
+		if err != nil {
+			plog.FatalfWithCode("001", "error getting port and auth token: %s\n", err.Error())
+		}
+
+		lolClient := lolclient.NewLoLClient(authToken, constants.URL_CLIENT_FORMAT, port)
+
+		dataDragon := datadragon.NewDataDragonClient()
+		version, err := dataDragon.GetMostRecentVersion()
+		if err != nil {
+			plog.FatalfWithCode("101", "unable to get most recent datadragon version: %s\n", err.Error())
+		}
+		championMap, err := dataDragon.GetChampionMapByKey(version)
+		if err != nil {
+			plog.FatalfWithCode("102", "unable to get champion map by key: %s\n", err.Error())
+		}
+
+		settingsDB, err := settingsdb.NewSettingsDB(opSys)
+		b := background.NewBackground(lolClient, championMap, settingsDB)
+		ui := ui.NewUI(lolClient, settingsDB)
+
+		quit := make(chan bool)
+		done := make(chan bool)
+
+		go func(done chan bool) {
+			err = b.Loop(quit)
+			if err != nil {
+				plog.ErrorfWithBackup("Background process quit\n", "background loop failed: %s\n", err.Error())
+			}
+			done <- true
+		}(done)
+
+		err = ui.Loop(quit)
+		if err != nil {
+			plog.ErrorfWithBackup("Error with user interface\n", "ui loop failed: %s\n", err.Error())
+		}
+
+		_ = <-done
 	}
-
-	lolClient := lolclient.NewLoLClient(authToken, constants.URL_CLIENT_FORMAT, port)
-
-	dataDragon := datadragon.NewDataDragonClient()
-	version, err := dataDragon.GetMostRecentVersion()
-	if err != nil {
-		plog.FatalfWithCode("101", "unable to get most recent datadragon version: %s\n", err.Error())
-	}
-	championMap, err := dataDragon.GetChampionMapByKey(version)
-	if err != nil {
-		plog.FatalfWithCode("102", "unable to get champion map by key: %s\n", err.Error())
-	}
-
-	b := background.NewBackground(lolClient, championMap)
-	err = b.Loop()
-
 }
 
 func waitForPortAndToken(opSys opsys.OpSys) (string, string, error) {
