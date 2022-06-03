@@ -1,9 +1,5 @@
 package keybindings
 
-import (
-	"encoding/json"
-)
-
 type GameEvents struct {
 	Cast1                           Binding `json:"evtCastSpell1"`
 	NormalCast1                     Binding `json:"evtNormalCastSpell1"`
@@ -36,60 +32,4 @@ type GameEvents struct {
 	SmartCastWithIndicator4         Binding `json:"evtSmartCastWithIndicatorSpell4"`
 	SmartPlusSelfCast4              Binding `json:"evtSmartPlusSelfCastSpell4"`
 	SmartPlusSelfCastWithIndicator4 Binding `json:"evtSmartPlusSelfCastWithIndicatorSpell4"`
-}
-
-func (ge GameEvents) MarshalJSON(omitEmpty bool) ([]byte, error) {
-	if !omitEmpty {
-		var geMap map[string]interface{}
-		geJSON, err := json.Marshal(ge)
-		if err != nil {
-			return nil, err
-		}
-		err = json.Unmarshal(geJSON, &geMap)
-		if err != nil {
-			return nil, err
-		}
-
-		var keysToDelete []string
-		for key, value := range geMap {
-			if value == nil || value == "" {
-				keysToDelete = append(keysToDelete, key)
-			}
-		}
-
-		for _, key := range keysToDelete {
-			delete(geMap, key)
-		}
-
-		finalJSON, err := json.Marshal(geMap)
-		return finalJSON, err
-
-	} else {
-		return json.Marshal(ge)
-	}
-}
-
-func (ge GameEvents) ConvertToMap() (map[string]interface{}, error) {
-	var geMap map[string]interface{}
-	geJSON, err := json.Marshal(ge)
-	if err != nil {
-		return nil, err
-	}
-	err = json.Unmarshal(geJSON, &geMap)
-	if err != nil {
-		return nil, err
-	}
-
-	var keysToDelete []string
-	for key, value := range geMap {
-		if value == nil || value == "" {
-			keysToDelete = append(keysToDelete, key)
-		}
-	}
-
-	for _, key := range keysToDelete {
-		delete(geMap, key)
-	}
-
-	return geMap, nil
 }

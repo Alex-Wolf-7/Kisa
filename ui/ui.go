@@ -20,30 +20,32 @@ func NewUI(lolClient *lolclient.LoLClient, settingsDB *settingsdb.SettingsDB) *U
 	}
 }
 
-func (ui *UI) Loop(quit chan bool) error {
+func (ui *UI) Loop() error {
 	fmt.Printf("Kisa is running. Enter a champion name to save current keybindings for that champion. Enter \"%s\" to save settings for all other champions.\n", settingsdb.DefaultName)
 	for {
-		select {
-		case <-quit:
-			return nil
-		default:
-			var text string
-			_, err := fmt.Scanln(&text)
-			if err != nil {
-				return err
+		var text string
+		_, err := fmt.Scanln(&text)
+		if err != nil {
+			if err.Error() == "unexpected newline" {
+				fmt.Printf("Empty input. Please try again\n")
+				continue
 			}
 
-			keyBindings, err := ui.lolClient.GetKeyBindings()
-			if err != nil {
-				return err
-			}
-
-			err = ui.settingsDB.PutKeyBindings(strings.ToLower(text), keyBindings)
-			if err != nil {
-				return err
-			}
-
-			fmt.Println("Key bindings saved")
+			return err
 		}
+
+		text = strings.Replace(text, "\"", "", -1)
+
+		keyBindings, err := ui.lolClient.GetKeyBindings()
+		if err != nil {
+			return err
+		}
+
+		err = ui.settingsDB.PutKeyBindings(strings.ToLower(text), keyBindings)
+		if err != nil {
+			return err
+		}
+
+		fmt.Println("Key bindings saved. Please enter another champion name, or \"default\".")
 	}
 }

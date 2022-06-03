@@ -15,9 +15,10 @@ import (
 )
 
 type Background struct {
-	lolClient   *lolclient.LoLClient
-	championMap map[string]*models.Champion
-	settingsDB  *settingsdb.SettingsDB
+	lolClient    *lolclient.LoLClient
+	championMap  map[string]*models.Champion
+	settingsDB   *settingsdb.SettingsDB
+	lastSetChamp string
 }
 
 func NewBackground(
@@ -33,33 +34,27 @@ func NewBackground(
 	}
 }
 
-func (b *Background) Loop(quit chan bool) error {
+func (b *Background) Loop() error {
 	for {
-		select {
-		case <-quit:
-			return nil
-		default:
+		currentGame, err := b.lolClient.GetGameSession()
+		if err != nil {
+			return err
+		}
 
-			currentGame, err := b.lolClient.GetGameSession()
+		switch currentGame.GetPhase() {
+		case game.Phase_CHAMP_SELECT:
+			err = b.ChampSelect()
 			if err != nil {
 				return err
 			}
+			time.Sleep(constants.CHECK_IF_GAME_STARTED_TIME)
 
-			switch currentGame.GetPhase() {
-			case game.Phase_CHAMP_SELECT:
-				err = b.ChampSelect()
-				if err != nil {
-					return err
-				}
-				time.Sleep(constants.CHECK_IF_GAME_STARTED_TIME)
-
-			case game.Phase_IN_PROGRESS:
-				// Game started: be done
-				return nil
-			default:
-				// No champ select or game started: wait for game start
-				time.Sleep(constants.CHECK_IF_CHAMP_SELECT_TIME)
-			}
+		case game.Phase_IN_PROGRESS:
+			// Game started: be done
+			return nil
+		default:
+			// No champ select or game started: wait for game start
+			time.Sleep(constants.CHECK_IF_CHAMP_SELECT_TIME)
 		}
 	}
 }
@@ -95,6 +90,11 @@ func (b *Background) ChampSelect() error {
 		err = b.lolClient.PatchKeyBindings(*keyBindings)
 		if err != nil {
 			plog.ErrorfWithBackup("unable to set keybindings", "unable to set keybindings to champion %s", champ.Name)
+		}
+
+		if champ.Name != b.lastSetChamp {
+			fmt.Printf("Successfully set keybindings for %s\n", champ.Name)
+			b.lastSetChamp = champ.Name
 		}
 	}
 	return nil

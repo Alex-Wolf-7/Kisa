@@ -35,6 +35,8 @@ func (b *Binding) UnmarshalJSON(data []byte) error {
 		return nil
 	}
 
+	jsonString = strings.Replace(jsonString, "],", "]", 1)
+
 	if len(data) < 4 || jsonString[0:2] != "\"[" || jsonString[len(jsonString)-2:] != "]\"" {
 		return fmt.Errorf("Binding not in expected format: %s", jsonString)
 	}

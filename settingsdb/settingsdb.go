@@ -62,7 +62,7 @@ func NewSettingsDB(opSys opsys.OpSys) (*SettingsDB, error) {
 func (db *SettingsDB) PutKeyBindings(champion string, keyBindings *keybindings.KeyBindings) error {
 	fileName := championToFileName(champion)
 
-	data, err := keyBindings.MarshalJSON(true)
+	data, err := json.Marshal(keyBindings)
 	if err != nil {
 		return fmt.Errorf("unable to marshal settings into json: %s", err.Error())
 	}

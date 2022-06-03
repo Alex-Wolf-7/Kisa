@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/Alex-Wolf-7/Kisa/background"
@@ -21,50 +22,64 @@ import (
 var clientErrorDisplayed = false
 
 func main() {
-	for {
-		opSys := opsys.NewOpSys(runtime.GOOS)
-		port, authToken, err := waitForPortAndToken(opSys)
-		if err != nil {
-			plog.FatalfWithCode("001", "error getting port and auth token: %s\n", err.Error())
-		}
+	opSys := opsys.NewOpSys(runtime.GOOS)
+	settingsDB, err := settingsdb.NewSettingsDB(opSys)
 
-		lolClient := lolclient.NewLoLClient(authToken, constants.URL_CLIENT_FORMAT, port)
+	var startLock sync.Mutex
 
-		dataDragon := datadragon.NewDataDragonClient()
-		version, err := dataDragon.GetMostRecentVersion()
-		if err != nil {
-			plog.FatalfWithCode("101", "unable to get most recent datadragon version: %s\n", err.Error())
-		}
-		championMap, err := dataDragon.GetChampionMapByKey(version)
-		if err != nil {
-			plog.FatalfWithCode("102", "unable to get champion map by key: %s\n", err.Error())
-		}
-
-		settingsDB, err := settingsdb.NewSettingsDB(opSys)
-		b := background.NewBackground(lolClient, championMap, settingsDB)
-		ui := ui.NewUI(lolClient, settingsDB)
-
-		quit := make(chan bool)
-		done := make(chan bool)
-
-		go func(done chan bool) {
-			err = b.Loop(quit)
+	go func() {
+		for {
+			b := setupBackground(opSys, settingsDB, &startLock)
+			err = b.Loop()
 			if err != nil {
 				plog.ErrorfWithBackup("Background process quit\n", "background loop failed: %s\n", err.Error())
 			}
-			done <- true
-		}(done)
+		}
+	}()
 
-		err = ui.Loop(quit)
+	for {
+		ui := setupUI(opSys, settingsDB, &startLock)
+		err = ui.Loop()
 		if err != nil {
 			plog.ErrorfWithBackup("Error with user interface\n", "ui loop failed: %s\n", err.Error())
 		}
-
-		_ = <-done
 	}
 }
 
-func waitForPortAndToken(opSys opsys.OpSys) (string, string, error) {
+func setupUI(opSys opsys.OpSys, settingsDB *settingsdb.SettingsDB, startLock *sync.Mutex) *ui.UI {
+	port, authToken, err := waitForPortAndToken(opSys, startLock)
+	if err != nil {
+		plog.FatalfWithCode("001", "error getting port and auth token: %s\n", err.Error())
+	}
+	lolClient := lolclient.NewLoLClient(authToken, constants.URL_CLIENT_FORMAT, port)
+	return ui.NewUI(lolClient, settingsDB)
+}
+
+func setupBackground(opSys opsys.OpSys, settingsDB *settingsdb.SettingsDB, startLock *sync.Mutex) *background.Background {
+	port, authToken, err := waitForPortAndToken(opSys, startLock)
+	if err != nil {
+		plog.FatalfWithCode("001", "error getting port and auth token: %s\n", err.Error())
+	}
+
+	lolClient := lolclient.NewLoLClient(authToken, constants.URL_CLIENT_FORMAT, port)
+
+	dataDragon := datadragon.NewDataDragonClient()
+	version, err := dataDragon.GetMostRecentVersion()
+	if err != nil {
+		plog.FatalfWithCode("101", "unable to get most recent datadragon version: %s\n", err.Error())
+	}
+	championMap, err := dataDragon.GetChampionMapByKey(version)
+	if err != nil {
+		plog.FatalfWithCode("102", "unable to get champion map by key: %s\n", err.Error())
+	}
+
+	return background.NewBackground(lolClient, championMap, settingsDB)
+}
+
+func waitForPortAndToken(opSys opsys.OpSys, startLock *sync.Mutex) (string, string, error) {
+	startLock.Lock()
+	defer startLock.Unlock()
+
 	var port, authToken string
 	var err error
 
