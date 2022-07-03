@@ -35,6 +35,9 @@ func NewBackground(
 }
 
 func (b *Background) Loop() error {
+	plog.Infof("Background loop started")
+	var champ *models.Champion
+	gameStarted := false
 	for {
 		currentGame, err := b.lolClient.GetGameSession()
 		if err != nil {
@@ -43,47 +46,71 @@ func (b *Background) Loop() error {
 
 		switch currentGame.GetPhase() {
 		case game.Phase_CHAMP_SELECT:
-			err = b.ChampSelect()
+			champ, err = b.ChampSelect()
 			if err != nil {
 				return err
 			}
 			time.Sleep(constants.CHECK_IF_GAME_STARTED_TIME)
 
 		case game.Phase_IN_PROGRESS:
+			gameStarted = true
 			// Game started: be done
-			return nil
+			continue
 		default:
+			if gameStarted {
+				gameStarted = false
+				// If game end, update keybindings for champion
+				go func() {
+					if champ != nil {
+						time.Sleep(constants.AFTER_GAME_WAIT_TO_GET_KEYBINDINGS_TIME)
+						keyBindings, err := b.lolClient.GetKeyBindings()
+						if err != nil {
+							plog.ErrorfWithBackup("Failed to set keybindings\n", "failed to get after-game keybindings for %s\n", champ.Name)
+							return
+						}
+						err = b.settingsDB.PutKeyBindings(champ.Name, keyBindings)
+						if err != nil {
+							plog.ErrorfWithBackup("Failed to set keybindings\n", "failed to save after-game keybindings for %s\n", champ.Name)
+
+						}
+						fmt.Printf("Saved keybindings for %s\n", champ.Name)
+						champ = nil
+					}
+				}()
+			}
 			// No champ select or game started: wait for game start
 			time.Sleep(constants.CHECK_IF_CHAMP_SELECT_TIME)
+			continue
 		}
 	}
 }
 
-func (b *Background) ChampSelect() error {
+func (b *Background) ChampSelect() (*models.Champion, error) {
 	// In champ select: keep getting most up-to-date locked champion and set keybindings
 	champNum, err := b.lolClient.GetLockedChampion()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
+	var champ *models.Champion
 	if champNum != 0 {
-		champ := b.championMap[strconv.Itoa(champNum)]
+		champ = b.championMap[strconv.Itoa(champNum)]
 
 		keyBindings, err := b.settingsDB.GetKeyBindings(champ.Name)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		if keyBindings == nil {
 			keyBindings, err = b.settingsDB.GetDefaultKeyBindings()
 			if err != nil {
-				return err
+				return nil, err
 			}
 			if keyBindings == nil {
 				keyBindings, err = b.NoDefaultKeybindings()
 				if err != nil {
-					return err
+					return nil, err
 				}
-				fmt.Println("No default key bindings found. Setting current key bindings as default.")
+				fmt.Println("No default key bindings found. Set current key bindings as default.")
 			}
 		}
 
@@ -97,7 +124,7 @@ func (b *Background) ChampSelect() error {
 			b.lastSetChamp = champ.Name
 		}
 	}
-	return nil
+	return champ, nil
 }
 
 func (b *Background) NoDefaultKeybindings() (*keybindings.KeyBindings, error) {

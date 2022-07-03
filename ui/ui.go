@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/Alex-Wolf-7/Kisa/lolclient"
+	"github.com/Alex-Wolf-7/Kisa/plog"
 	"github.com/Alex-Wolf-7/Kisa/settingsdb"
 )
 
@@ -22,6 +23,7 @@ func NewUI(lolClient *lolclient.LoLClient, settingsDB *settingsdb.SettingsDB) *U
 
 func (ui *UI) Loop() error {
 	fmt.Printf("Kisa is running. Enter a champion name to save current keybindings for that champion. Enter \"%s\" to save settings for all other champions.\n", settingsdb.DefaultName)
+	plog.Infof("UI loop started")
 	for {
 		var text string
 		_, err := fmt.Scanln(&text)
