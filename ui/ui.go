@@ -1,7 +1,9 @@
 package ui
 
 import (
+	"bufio"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/Alex-Wolf-7/Kisa/lolclient"
@@ -26,7 +28,10 @@ func (ui *UI) Loop() error {
 	plog.Infof("UI loop started")
 	for {
 		var text string
-		_, err := fmt.Scanln(&text)
+
+		reader := bufio.NewReader(os.Stdin)
+		text, err := reader.ReadString('\n')
+
 		if err != nil {
 			if err.Error() == "unexpected newline" {
 				fmt.Printf("Empty input. Please try again\n")
