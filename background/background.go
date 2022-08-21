@@ -44,8 +44,10 @@ func (b *Background) Loop() error {
 			return err
 		}
 
+		plog.Periodicf("Current phase: %s\n", currentGame.GetPhase().String())
 		switch currentGame.GetPhase() {
 		case game.Phase_CHAMP_SELECT:
+			gameStarted = false
 			champ, err = b.ChampSelect()
 			if err != nil {
 				return err
@@ -54,30 +56,29 @@ func (b *Background) Loop() error {
 
 		case game.Phase_IN_PROGRESS:
 			gameStarted = true
+			time.Sleep(constants.CHECK_IF_GAME_ENDED_TIME)
 			// Game started: be done
 			continue
 		default:
-			if gameStarted {
-				gameStarted = false
+			if gameStarted && champ != nil {
 				// If game end, update keybindings for champion
-				go func() {
-					if champ != nil {
-						time.Sleep(constants.AFTER_GAME_WAIT_TO_GET_KEYBINDINGS_TIME)
-						keyBindings, err := b.lolClient.GetKeyBindings()
-						if err != nil {
-							plog.ErrorfWithBackup("Failed to set keybindings\n", "failed to get after-game keybindings for %s\n", champ.Name)
-							return
-						}
-						err = b.settingsDB.PutKeyBindings(champ.Name, keyBindings)
-						if err != nil {
-							plog.ErrorfWithBackup("Failed to set keybindings\n", "failed to save after-game keybindings for %s\n", champ.Name)
-
-						}
-						fmt.Printf("Saved keybindings for %s\n", champ.Name)
-						champ = nil
+				go func(previousChamp *models.Champion) {
+					time.Sleep(constants.AFTER_GAME_WAIT_TO_GET_KEYBINDINGS_TIME)
+					keyBindings, err := b.lolClient.GetKeyBindings()
+					if err != nil {
+						plog.ErrorfWithBackup("Failed to set keybindings\n", "failed to get after-game keybindings for %s\n", previousChamp.Name)
+						return
 					}
-				}()
+					err = b.settingsDB.PutKeyBindings(previousChamp.Name, keyBindings)
+					if err != nil {
+						plog.ErrorfWithBackup("Failed to set keybindings\n", "failed to save after-game keybindings for %s\n", previousChamp.Name)
+
+					}
+					fmt.Printf("Saved keybindings for %s\n", previousChamp.Name)
+				}(champ)
 			}
+			gameStarted = false
+			champ = nil
 			// No champ select or game started: wait for game start
 			time.Sleep(constants.CHECK_IF_CHAMP_SELECT_TIME)
 			continue

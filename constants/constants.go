@@ -9,6 +9,7 @@ const CHECK_IF_CLIENT_OPEN_TIME = 15 * time.Second
 const CHECK_IF_GAME_STARTED_TIME = 1 * time.Second
 const CHECK_IF_CHAMP_SELECT_TIME = 10 * time.Second
 const AFTER_GAME_WAIT_TO_GET_KEYBINDINGS_TIME = 5 * time.Second
+const CHECK_IF_GAME_ENDED_TIME = 5 * time.Second
 
 const MAC_SETTINGS_DB_PATH = "%s/Documents/KisaData"
 const WINDOWS_SETTINGS_DB_PATH = "C:/Users/%s/Documents/KisaData"
