@@ -101,17 +101,20 @@ func (b *Background) ChampSelect() (*models.Champion, error) {
 		if err != nil {
 			return nil, err
 		}
+		// No keybindings saved for champion
 		if keyBindings == nil {
+			// Check for default keybindings
 			keyBindings, err = b.settingsDB.GetDefaultKeyBindings()
 			if err != nil {
 				return nil, err
 			}
+			// No default keybindings, short circuit
 			if keyBindings == nil {
-				keyBindings, err = b.NoDefaultKeybindings()
-				if err != nil {
-					return nil, err
+				if champ.Name != b.lastSetChamp {
+					fmt.Println("No default key bindings found. Keybindings not adjusted.")
+					b.lastSetChamp = champ.Name
 				}
-				fmt.Println("No default key bindings found. Set current key bindings as default.")
+				return champ, nil
 			}
 		}
 
