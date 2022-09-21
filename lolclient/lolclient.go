@@ -23,6 +23,8 @@ const (
 	GAME_SESSION         = "lol-gameflow/v1/session"
 	GAME_SETTINGS        = "lol-game-settings/v1/input-settings"
 	CURRENT_CHAMPION     = "lol-champ-select/v1/current-champion"
+
+	HTTP_TIMEOUT = 5 * time.Second
 )
 
 type LoLClient struct {
@@ -40,24 +42,13 @@ func NewLoLClient(authToken string, clientURL string, port string) *LoLClient {
 	}
 	client := http.DefaultClient
 	client.Transport = &transport
+	client.Timeout = HTTP_TIMEOUT
 
 	return &LoLClient{
 		http:      client,
 		authToken: authToken,
 		url:       fmt.Sprintf(clientURL, port),
 	}
-}
-
-func (lol *LoLClient) Test() {
-	url := lol.url + "lol-champ-select/v1/current-champion"
-	req, _ := http.NewRequest("GET", url, nil)
-	lol.setAuthorizationHeader(req)
-
-	resp, _ := lol.http.Do(req)
-
-	bytes := make([]byte, 1000, 1000)
-	resp.Body.Read(bytes)
-	_ = string(bytes)
 }
 
 func (lol *LoLClient) GetLockedChampion() (int, error) {
