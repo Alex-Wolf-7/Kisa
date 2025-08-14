@@ -47,7 +47,6 @@ func NewSettingsDB(opSys opsys.OpSys) (*SettingsDB, error) {
 		}
 	}
 
-	fmt.Println(dbPath)
 	err := os.Chdir(dbPath)
 	if err != nil {
 		return nil, fmt.Errorf("unable to change into settings directory: %s", err.Error())

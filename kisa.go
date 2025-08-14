@@ -106,7 +106,7 @@ func getClientInfo(opSys opsys.OpSys) (string, string, error) {
 	} else if opSys.IsMac() {
 		out, err = getProcessesMac()
 	} else {
-		return "", "", fmt.Errorf("Unrecognized GOOS: %s", opSys.String())
+		return "", "", fmt.Errorf("unrecognized GOOS: %s", opSys.String())
 	}
 
 	if err != nil {
@@ -115,7 +115,7 @@ func getClientInfo(opSys opsys.OpSys) (string, string, error) {
 
 	portMatcher, err := regexp.Compile("--app-port=([0-9]*)")
 	if err != nil {
-		return "", "", fmt.Errorf("Unable to build Regex matcher for app port: %s", err)
+		return "", "", fmt.Errorf("unable to build Regex matcher for app port: %s", err)
 	}
 
 	portMatch := string(portMatcher.Find(out))
@@ -135,9 +135,9 @@ func getClientInfo(opSys opsys.OpSys) (string, string, error) {
 	}
 	port := strings.Split(portMatch, "=")[1]
 
-	authMatcher, err := regexp.Compile("--remoting-auth-token=([0-9A-Za-z_-]*)")
+	authMatcher, err := regexp.Compile("-auth-token=([0-9A-Za-z_-]*)")
 	if err != nil {
-		return "", "", fmt.Errorf("Unable to build Regex matcher for auth token: %s", err)
+		return "", "", fmt.Errorf("unable to build Regex matcher for auth token: %s", err)
 	}
 
 	authMatch := string(authMatcher.Find(out))
@@ -152,10 +152,15 @@ func getClientInfo(opSys opsys.OpSys) (string, string, error) {
 }
 
 func getProcessesWindows() ([]byte, error) {
-	cmd := exec.Command("wmic", "PROCESS", "WHERE", "name='LeagueClientUx.exe'", "GET", "commandline")
-	out, err := cmd.Output()
+	// Get all windows processes named "LeagueClientUx.exe", grab the CommandLine property of them, split it into words, and grab words that look like our required params
+	psCommand := `(Get-WmiObject -Query "SELECT * FROM Win32_Process WHERE Name = 'LeagueClientUx.exe'" |
+	Select-Object -ExpandProperty CommandLine) -split ' ' |
+	Where-Object { $_ -match '--app-port' -or $_ -match '--remoting-auth-token'}`
+	cmd := exec.Command("powershell", "-Command", psCommand)
+
+	out, err := cmd.CombinedOutput()
 	if err != nil {
-		return nil, fmt.Errorf("Unable to get current windows processes: %s", err)
+		return nil, fmt.Errorf("unable to get current windows processes: %s", err)
 	}
 
 	return out, nil
@@ -165,7 +170,7 @@ func getProcessesMac() ([]byte, error) {
 	cmd := exec.Command("bash", "-c", "ps -A | grep LeagueClientUx")
 	out, err := cmd.Output()
 	if err != nil {
-		return nil, fmt.Errorf("Unable to get current mac processes: %s", err)
+		return nil, fmt.Errorf("unable to get current mac processes: %s", err)
 	}
 
 	return out, nil

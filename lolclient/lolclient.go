@@ -55,19 +55,19 @@ func (lol *LoLClient) GetLockedChampion() (int, error) {
 	reqUrl := lol.url + CURRENT_CHAMPION
 	req, err := http.NewRequest("GET", reqUrl, nil)
 	if err != nil {
-		return 0, fmt.Errorf("Error creating GetCurrentChampion request: %s", err)
+		return 0, fmt.Errorf("error creating GetCurrentChampion request: %s", err)
 	}
 	lol.setAuthorizationHeader(req)
 
 	resp, err := lol.http.Do(req)
 	if err != nil {
-		return 0, fmt.Errorf("Error performing GetCurrentChampion request: %s", err)
+		return 0, fmt.Errorf("error performing GetCurrentChampion request: %s", err)
 	}
 
 	champNum := new(int)
 	err = json.NewDecoder(resp.Body).Decode(champNum)
 	if err != nil || champNum == nil {
-		return 0, fmt.Errorf("Error champion number from GetCurrentChampion response: %s", err)
+		return 0, fmt.Errorf("error champion number from GetCurrentChampion response: %s", err)
 	}
 
 	return *champNum, nil
@@ -78,19 +78,19 @@ func (lol *LoLClient) GetCurrentSummoner() (*summoner.Summoner, error) {
 	reqUrl := lol.url + CURRENT_SUMMONER
 	req, err := http.NewRequest("GET", reqUrl, nil)
 	if err != nil {
-		return nil, fmt.Errorf("Error creating GetCurrentSummoner request: %s", err)
+		return nil, fmt.Errorf("error creating GetCurrentSummoner request: %s", err)
 	}
 	lol.setAuthorizationHeader(req)
 
 	resp, err := lol.http.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("Error performing GetCurrentSummoner request: %s", err)
+		return nil, fmt.Errorf("error performing GetCurrentSummoner request: %s", err)
 	}
 
 	summoner := new(summoner.Summoner)
 	err = json.NewDecoder(resp.Body).Decode(summoner)
 	if err != nil {
-		return nil, fmt.Errorf("Error decoding Summoner object from GetCurrentSummoner response: %s", err)
+		return nil, fmt.Errorf("error decoding Summoner object from GetCurrentSummoner response: %s", err)
 	}
 
 	return summoner, nil
@@ -100,19 +100,19 @@ func (lol *LoLClient) GetChampSelectSession() (*match.Match, error) {
 	reqUrl := lol.url + CHAMP_SELECT_SESSION
 	req, err := http.NewRequest("GET", reqUrl, nil)
 	if err != nil {
-		return nil, fmt.Errorf("Error creating GetChampSelectSession request: %s", err)
+		return nil, fmt.Errorf("error creating GetChampSelectSession request: %s", err)
 	}
 	lol.setAuthorizationHeader(req)
 
 	resp, err := lol.http.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("Error performing GetChampSelectSession request: %s", err)
+		return nil, fmt.Errorf("error performing GetChampSelectSession request: %s", err)
 	}
 
 	match := new(match.Match)
 	err = json.NewDecoder(resp.Body).Decode(match)
 	if err != nil {
-		return nil, fmt.Errorf("Error decoding Match object from GetChampSelectSession response: %s", err)
+		return nil, fmt.Errorf("error decoding Match object from GetChampSelectSession response: %s", err)
 	}
 
 	return match, nil
@@ -122,19 +122,19 @@ func (lol *LoLClient) GetGameSession() (*game.Game, error) {
 	reqUrl := lol.url + GAME_SESSION
 	req, err := http.NewRequest("GET", reqUrl, nil)
 	if err != nil {
-		return nil, fmt.Errorf("Error creating GetGameSession request: %s", err)
+		return nil, fmt.Errorf("error creating GetGameSession request: %s", err)
 	}
 	lol.setAuthorizationHeader(req)
 
 	resp, err := lol.http.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("Error performing GetGameSession request: %s", err)
+		return nil, fmt.Errorf("error performing GetGameSession request: %s", err)
 	}
 
 	game := new(game.Game)
 	err = json.NewDecoder(resp.Body).Decode(game)
 	if err != nil {
-		return nil, fmt.Errorf("Error decoding Game object from GetGameSession response: %s", err)
+		return nil, fmt.Errorf("error decoding Game object from GetGameSession response: %s", err)
 	}
 
 	return game, nil
@@ -144,19 +144,19 @@ func (lol *LoLClient) GetGameSettings() (gs.GameSettings, error) {
 	reqUrl := lol.url + GAME_SETTINGS
 	req, err := http.NewRequest("GET", reqUrl, nil)
 	if err != nil {
-		return nil, fmt.Errorf("Error creating GetGameSettings request: %s", err)
+		return nil, fmt.Errorf("error creating GetGameSettings request: %s", err)
 	}
 	lol.setAuthorizationHeader(req)
 
 	resp, err := lol.http.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("Error performing GetGameSettings request: %s", err)
+		return nil, fmt.Errorf("error performing GetGameSettings request: %s", err)
 	}
 
 	gameSettings := gs.NewGameSettings()
 	err = json.NewDecoder(resp.Body).Decode(&gameSettings)
 	if err != nil {
-		return nil, fmt.Errorf("Error decoding GameSettings object from GetGameSettings response: %s", err)
+		return nil, fmt.Errorf("error decoding GameSettings object from GetGameSettings response: %s", err)
 	}
 
 	return gameSettings, nil
@@ -166,19 +166,19 @@ func (lol *LoLClient) GetKeyBindings() (*keybindings.KeyBindings, error) {
 	reqUrl := lol.url + GAME_SETTINGS
 	req, err := http.NewRequest("GET", reqUrl, nil)
 	if err != nil {
-		return nil, fmt.Errorf("Error creating GetKeyBindings request: %s", err)
+		return nil, fmt.Errorf("error creating GetKeyBindings request: %s", err)
 	}
 	lol.setAuthorizationHeader(req)
 
 	resp, err := lol.http.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("Error performing GetKeyBindings request: %s", err)
+		return nil, fmt.Errorf("error performing GetKeyBindings request: %s", err)
 	}
 
 	keyBindings := new(keybindings.KeyBindings)
 	err = json.NewDecoder(resp.Body).Decode(keyBindings)
 	if err != nil {
-		return nil, fmt.Errorf("Error decoding KeyBindings object from GetGameSettings response: %s", err)
+		return nil, fmt.Errorf("error decoding KeyBindings object from GetGameSettings response: %s", err)
 	}
 
 	return keyBindings, nil
@@ -187,7 +187,7 @@ func (lol *LoLClient) GetKeyBindings() (*keybindings.KeyBindings, error) {
 func (lol *LoLClient) PatchKeyBindings(keybindings keybindings.KeyBindings) error {
 	bindingsBytes, err := json.Marshal(keybindings)
 	if err != nil {
-		return fmt.Errorf("Unable to marshal keybindings into JSON: %s", err)
+		return fmt.Errorf("unable to marshal keybindings into JSON: %s", err)
 	}
 
 	reqBody := bytes.NewReader(bindingsBytes)
@@ -195,13 +195,13 @@ func (lol *LoLClient) PatchKeyBindings(keybindings keybindings.KeyBindings) erro
 	reqUrl := lol.url + GAME_SETTINGS
 	req, err := http.NewRequest("PATCH", reqUrl, reqBody)
 	if err != nil {
-		return fmt.Errorf("Error creating PatchKeyBindings request: %s", err)
+		return fmt.Errorf("error creating PatchKeyBindings request: %s", err)
 	}
 	lol.setAuthorizationHeader(req)
 
 	resp, err := lol.http.Do(req)
 	if err != nil {
-		return fmt.Errorf("Error performing PatchKeyBindings request: %s", err)
+		return fmt.Errorf("error performing PatchKeyBindings request: %s", err)
 	}
 
 	if resp.StatusCode != 200 {
@@ -214,7 +214,7 @@ func (lol *LoLClient) PatchKeyBindings(keybindings keybindings.KeyBindings) erro
 func (lol *LoLClient) PatchGameSettings(gameSettings gs.GameSettings) error {
 	settingsBytes, err := json.Marshal(gameSettings)
 	if err != nil {
-		return fmt.Errorf("Unable to marshal gameSettings into JSON: %s", err)
+		return fmt.Errorf("unable to marshal gameSettings into JSON: %s", err)
 	}
 
 	reqBody := bytes.NewReader(settingsBytes)
@@ -222,13 +222,13 @@ func (lol *LoLClient) PatchGameSettings(gameSettings gs.GameSettings) error {
 	reqUrl := lol.url + GAME_SETTINGS
 	req, err := http.NewRequest("PATCH", reqUrl, reqBody)
 	if err != nil {
-		return fmt.Errorf("Error creating PatchGameSettings request: %s", err)
+		return fmt.Errorf("error creating PatchGameSettings request: %s", err)
 	}
 	lol.setAuthorizationHeader(req)
 
 	resp, err := lol.http.Do(req)
 	if err != nil {
-		return fmt.Errorf("Error performing PatchGameSettings request: %s", err)
+		return fmt.Errorf("error performing PatchGameSettings request: %s", err)
 	}
 
 	if resp.StatusCode != 200 {
